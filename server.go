@@ -24,6 +24,7 @@ type Message struct {
 // pasteHandler responds to the `/paste/` URI and sends the
 // paste home page located at `html/paste.html`.
 func pasteHandler(w http.ResponseWriter, r *http.Request) {
+  fmt.Printf("INFO: Rendering paste\n")
   t, _ := template.ParseFiles("html/paste.html")
   t.Execute(w, nil)
 }
@@ -31,6 +32,7 @@ func pasteHandler(w http.ResponseWriter, r *http.Request) {
 // aboutHandler responds to the `/about/` URI and sends the
 // about page for Cryptbin located at `html/about.html`.
 func aboutHandler(w http.ResponseWriter, r *http.Request) {
+  fmt.Printf("INFO: Rendering about\n")
   t, _ := template.ParseFiles("html/about.html")
   t.Execute(w, nil)
 }
@@ -39,6 +41,7 @@ func aboutHandler(w http.ResponseWriter, r *http.Request) {
 // view page template located at `html/view.html` using
 // information given in te URI.
 func viewHandler(w http.ResponseWriter, r *http.Request) {
+  fmt.Printf("INFO: Rendering view.\n")
   dat := &Message{Key: "[tktk key]", Text: "[tktk text]"}
   t, _ := template.ParseFiles("html/view.html")
   t.Execute(w, dat)
@@ -59,12 +62,12 @@ func main() {
   http.HandleFunc("/about/", aboutHandler) // Route `about` to ''
   http.HandleFunc("/", pasteHandler) // Route root to `paste`
   if *in_production {
-    http.ListenAndServe(":8080", nil)
     fmt.Printf("Running Cryptbin in production mode\n")
     fmt.Printf("Go to localhost:8080\n")
+    http.ListenAndServe(":8080",nil)
   } else {
-    http.ListenAndServe(":8000", nil)
     fmt.Printf("Running Cryptbin in developer mode\n")
     fmt.Printf("Go to localhost:8000\n")
+    http.ListenAndServe(":8000", nil)
   }
 }

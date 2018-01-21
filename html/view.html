@@ -3,13 +3,66 @@
     <title>
       View | Cryptbin
     </title>
+    <meta charset="utf-8">
+    <meta name="viewprt" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
   </head>
   <body>
-    <h1>
-      Cryptbin
-    </h1>
-    <p>
-      This will be the view page.
-    </p>
+    <div class="container">
+      <nav class="navbar navbar-inverse">
+         <div class="container-fluid">
+          <button type="button" class="navbar-toggle" data-toggle="collapse" data-target="#hamburger">
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+          </button>
+          <div class="navbar-header">
+             <a class="navbar-brand" href="/">Cryptbin</a>
+           </div>
+          <div class="collapse navbar-collapse" id="hamburger">
+             <ul class="nav navbar-nav">
+               <li><a class="active" href="/about/">About</a></li>
+             </ul>
+          </div>
+         </div>
+      </nav>
+      <article class="box post">
+        <header>
+          <h2>About</h2>
+        </header>
+        <p>
+          This is the Cryptbin view page.
+        </p>
+      </article>
+      <footer class="page-footer blue center-on-small-only">
+        <div class="container-fluid">
+          <div class="row">
+            <div class="col-md-6">
+              <h4 class="title">Questions or Comments? Get in touch:</h4>
+              <p>
+                Feel free to contact me.
+                The best way to reach me is by <a href="mailto:me@georgesaussy.com">email</a>, but I am pretty responsive on Twitter too.
+                If you have any ideas for a project, shoot me a message, or if you want to contribute to a repository, just open a pull request and let me know.
+                I'd love to hear your thoughts!
+              </p>
+            </div>
+            <div class="col-md-6">
+              <h5 class="title">External Links</h5>
+              <ul>
+                <li>Email: <a href="mailto:me@georgesaussy.com">me@georgesaussy.com</a></li>
+                <li>Twitter: <a href="http://www.twitter.com/hotsaussy">@hotsaussy</a></li>
+                <li><a href="http://www.github.com/GeorgeSaussy">Github Profile</a></li>
+              </ul>
+            </div>
+          </div>
+        </div>
+        <div class="footer-copyright">
+          <div class="container-fluid">
+            © 2018 Copyright: George Saussy
+          </div>
+        </div>
+      </footer>
+    </div>
   </body>
 </html>

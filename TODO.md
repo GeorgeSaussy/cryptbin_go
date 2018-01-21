@@ -9,4 +9,5 @@ Broad points:
 
 For later:
 
-- use godoc 
+- use godoc
+- write about copy 
