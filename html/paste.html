@@ -29,11 +29,27 @@
       </nav>
       <article class="box post">
         <header>
-          <h2>About</h2>
+          <h2>Home</h2>
         </header>
         <p>
-          This is the Cryptbin paste page.
+          Paste content below.
         </p>
+        <form class="well" method="post" action="/new/">
+          <textarea name="paste_value" class="input-xlarge" rows="10" style="width:100%;overflow:hidden; height:250px"></textarea>
+          <p></p>
+          <p>
+            <label for="expiration">Expiration:</label>
+            <select name="expiration">
+              <option value="burn_after_reading">Burn after reading</option>
+              <option value="12_hr">12 hours</option>
+              <option value="24_hr">24 hours</option>
+              <option value="5_days">5 days</option>
+            </select> 
+            <button class="btn btn-primary" type="submit">
+              Submit
+            </button>
+          </p>
+        </form>
       </article>
       <footer class="page-footer blue center-on-small-only">
         <div class="container-fluid">

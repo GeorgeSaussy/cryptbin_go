@@ -1,0 +1,2 @@
+echo "" > db/cryptbin.db
+

@@ -12,6 +12,7 @@ For later:
 - use godoc
 - write about copy 
 - write install, authors, and readme
+- figure out setting global debug and in\_production
 
 v1 complete when:
 
