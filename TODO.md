@@ -1,8 +1,12 @@
 # TODO
 
+
+Broad points:
+
 - write server.go
-- write index.html and index.js
+- write html/\*
     - use boostrap
-- write about.html
-- write contact.html
-- finish TODO.md
+
+For later:
+
+- use godoc 
