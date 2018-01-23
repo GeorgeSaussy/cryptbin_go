@@ -7,10 +7,14 @@ import (
   "database/sql"
   "flag"
   "fmt"
+  "hash/fnv"
   "html/template"
   "net/http"
+  "strconv"
+  "time"
   _ "github.com/mattn/go-sqlite3"
 )
+
 // Structs
 
 // ServerConfig contains the configuration of the server. 
@@ -18,6 +22,9 @@ import (
 type ServerConfig struct {
   InProduction bool
   Debug bool
+  Password string
+  Username string
+  Database *sql.DB
 }
 
 // Message struct is designed to hold a stored message. 
@@ -52,17 +59,17 @@ func logDebug(s string, config * ServerConfig) {
   }
 }
 
+func checkError(err error) {
+  if err != nil {
+    panic(err)
+  }
+}
+
 // checkAndInitDataBase checks if a database is present.
 // If no database present, it initializes one.
 func checkAndInitDataBase(config *ServerConfig) {
-  if ! config.InProduction {
-    db, err := sql.Open("sqlite3", "./db/cryptbin.db")
-    rows, err := db.Query("PRAGMA table_info(pastes)")
-    nRows int
-    err := rows.Scan(&nRows)
-    fmt.Printf(nRows) 
-  } else {
-    logError("PG not implemented yet.", config)
+  if config.Database != nil {
+    logDebug("Database initialized!", config)
   }
 }
 
@@ -74,18 +81,45 @@ func pasteHandler(w http.ResponseWriter, r *http.Request, config * ServerConfig)
   t.Execute(w, nil)
 }
 
+// hashString wraps the FNV hash function to hash strings
+func hashString(s string) string {
+  ret := ""
+  h := fnv.New64a()
+  h.Write([]byte(s))
+  ret = strconv.FormatUint(h.Sum64(), 16) // XXX check conversion for correctness
+  return ret
+}
+
 // newHandler responds to POST requests posting a new form.
 // A correctly formated POST is then redirected to the view 
 // the submited content.
 func newHandler(w http.ResponseWriter, r *http.Request, config * ServerConfig) {
   logInfo("Computing new.", config)
-  if err := r.ParseForm(); err != nil {
-    logError("ParseForm() err: " + err.Error(), config)
-    return
+  created_at := time.Now()
+  paste_value := r.FormValue("paste_value")
+  expiration_text := r.FormValue("expiration")
+  expiration := time.Now()
+  burn_after_reading := false
+  switch expiration_text {
+  case "burn_after_reading":
+    burn_after_reading = true
+    expiration = expiration.Add(time.Hour*12)
+  case "12_hr":
+    expiration = expiration.Add(time.Hour*12)
+  case "24_hr":
+    expiration = expiration.Add(time.Hour*24)
+  case "5_days":
+    expiration = expiration.Add(time.Hour*5*24)
+  default:
+    expiration = expiration.Add(time.Hour*12) // Default to 12 hr 
   }
-  logDebug("Value: " + r.FormValue("paste_value"), config)
-  logDebug("Expiration: " + r.FormValue("expiration"), config)
-  http.Redirect(w, r, "/view/", 301)
+  paste_hash := hashString(paste_value)
+  logDebug("Value: " + paste_value, config)
+  logDebug("Expiration: " + expiration_text, config)
+  logDebug("Hash: " + paste_hash, config)
+  stmt, _ := config.Database.Prepare("INSERT INTO paste(created_at, paste_value, expiration, burn_after_reading, paste_hash) values(?, ?, ?, ?, ?)")
+  stmt.Exec(created_at, paste_value, expiration, burn_after_reading, paste_hash)
+  http.Redirect(w, r, "/view/"+paste_hash, 301)
 }
 
 // aboutHandler responds to the `/about/` URI and sends the
@@ -101,16 +135,29 @@ func aboutHandler(w http.ResponseWriter, r *http.Request, config *ServerConfig) 
 // information given in te URI.
 func viewHandler(w http.ResponseWriter, r *http.Request, config *ServerConfig) {
   logInfo("Rendering view.", config)
-  dat := &Message{Key: "[tktk key]", Text: "[tktk text]"}
+  uri := r.URL.Path
+  paste_hash := uri[len("/view/"):] // FIXME check for sql injection
+  rows, _ := config.Database.Query("SELECT paste_value FROM paste WHERE paste_hash='" + paste_hash + "'")
+  paste_value := "[tktk]"
+  for rows.Next() {
+    rows.Scan(&paste_value)
+  }
+  rows.Close()
+  logDebug("URI: " + uri, config)
+  logDebug("hash: " + paste_hash, config)
+  logDebug("paste: " + paste_value, config)
+  dat := &Message{Key: paste_hash, Text: paste_value}
   t, _ := template.ParseFiles("html/view.html")
   t.Execute(w, dat)
 }
 
+// makeHandler wraps the HandlerFuncs to pass the server configuration.
 func makeHandler(fn func(http.ResponseWriter, *http.Request, *ServerConfig), config *ServerConfig) http.HandlerFunc {
   return func(w http.ResponseWriter, r *http.Request) {
     fn(w, r, config)
   }
 }
+
 // main function is just the main function of this code base.
 // As of right now, all that main does is 
 // parse the command line arguments,
@@ -120,9 +167,17 @@ func main() {
   // Parse flags
   inProduction :=  flag.Bool("prod", false, "Set as true if the server is running in production.")
   debug := flag.Bool("debug", false, "Set to true to print debugging information to log.")
+  password := flag.String("pwd", "", "Set the Postgres database password")
+  username := flag.String("uname", "", "Set the Postgres username.")
   flag.Parse()
-  config := &ServerConfig{InProduction: *inProduction, Debug: *debug}
+  config := &ServerConfig{InProduction: *inProduction, Debug: *debug, Password: *password, Username: *username, Database: nil}
   // Init database if need be  
+  db, err := sql.Open("sqlite3", "db/cryptbin.db")
+  if err != nil {
+    logError("Database is busted", config)
+  } else {
+    config.Database = db
+  }
   checkAndInitDataBase(config)
   // Set up http server
   http.HandleFunc("/paste/", makeHandler(pasteHandler, config)) // Route `paste` to ''
