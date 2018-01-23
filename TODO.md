@@ -13,14 +13,15 @@ Up next:
   - ~~process URI correctly~~
   - ~~query database~~
   - ~~set of Message struct~~
-  - check for sql injection for view handler
+  - ~~check for sql injection for view handler~~
 - rewrite view template to display paste
 - *refactor*
 - add time left for paste on view
 - add view count to table
 - implement burn after reading
-- implement 401 for deleted views
+- implement 404 for deleted/missing views
 - implement periodic msg deletion
+- add postgres support
 - *refactor*
 
 ## Other

@@ -11,6 +11,7 @@ import (
   "html/template"
   "net/http"
   "strconv"
+  "strings"
   "time"
   _ "github.com/mattn/go-sqlite3"
 )
@@ -130,25 +131,42 @@ func aboutHandler(w http.ResponseWriter, r *http.Request, config *ServerConfig) 
   t.Execute(w, nil)
 }
 
+// checkValidHash checks if a string is a hexidecimal string
+func checkValidHash(paste_hash string) bool {
+  ret := true
+  valid_chars := "0123456789abcdefABCDEF"
+  for ind := 0; ind < len(paste_hash) && ret; ind++ {
+    if ! strings.Contains(valid_chars, paste_hash[ind:ind+1]) {
+      ret = false
+    }
+  }
+  return ret
+}
+
 // viewHandler responds to the `/view/` URI and sends the 
 // view page template located at `html/view.html` using
 // information given in te URI.
 func viewHandler(w http.ResponseWriter, r *http.Request, config *ServerConfig) {
   logInfo("Rendering view.", config)
   uri := r.URL.Path
-  paste_hash := uri[len("/view/"):] // FIXME check for sql injection
-  rows, _ := config.Database.Query("SELECT paste_value FROM paste WHERE paste_hash='" + paste_hash + "'")
-  paste_value := "[tktk]"
-  for rows.Next() {
-    rows.Scan(&paste_value)
+  paste_hash := uri[len("/view/"):]
+  if checkValidHash(paste_hash) {
+    rows, _ := config.Database.Query("SELECT paste_value FROM paste WHERE paste_hash='" + paste_hash + "'")
+    paste_value := "[tktk]"
+    for rows.Next() {
+      rows.Scan(&paste_value)
+    }
+    rows.Close()
+    logDebug("URI: " + uri, config)
+    logDebug("hash: " + paste_hash, config)
+    logDebug("paste: " + paste_value, config)
+    dat := &Message{Key: paste_hash, Text: paste_value}
+    t, _ := template.ParseFiles("html/view.html")
+    t.Execute(w, dat)
+  } else { // in case hash is invalid, redirect home
+    // FIXME implement a 404 page
+    pasteHandler(w, r, config)
   }
-  rows.Close()
-  logDebug("URI: " + uri, config)
-  logDebug("hash: " + paste_hash, config)
-  logDebug("paste: " + paste_value, config)
-  dat := &Message{Key: paste_hash, Text: paste_value}
-  t, _ := template.ParseFiles("html/view.html")
-  t.Execute(w, dat)
 }
 
 // makeHandler wraps the HandlerFuncs to pass the server configuration.
