@@ -14,14 +14,20 @@ Up next:
   - ~~query database~~
   - ~~set of Message struct~~
   - ~~check for sql injection for view handler~~
-- rewrite view template to display paste
+- ~~rewrite view template to display paste~~
 - *refactor*
+  - list functions in funcs.txt
+  - break functions into 10 lines or less
+  - break file into server.go, lib.go
+  - address all fixme/xxx/todo comments
+  - replace current logging with the log function
 - add time left for paste on view
 - add view count to table
 - implement burn after reading
 - implement 404 for deleted/missing views
 - implement periodic msg deletion
 - add postgres support
+- write a log++ package
 - *refactor*
 
 ## Other
