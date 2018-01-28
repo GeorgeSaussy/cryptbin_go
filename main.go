@@ -7,11 +7,8 @@ import (
   "database/sql"
   "flag"
   "fmt"
-  "hash/fnv"
   "html/template"
   "net/http"
-  "strconv"
-  "strings"
   "time"
   _ "github.com/mattn/go-sqlite3"
 )
@@ -38,57 +35,12 @@ type Message struct {
 
 // Functions
 
-// sendToLog sends information to console, or a log file if set
-func sendToLog(s string, config * ServerConfig) {
-  fmt.Printf("%s\n", s)
-}
-
-// logInfo prints information to console, or a log file if set
-func logInfo(s string, config * ServerConfig) {
-  sendToLog("INFO: " + s, config)
-}
-
-// logErrors prints error information to the log
-func logError(s string, config * ServerConfig) {
-  sendToLog("ERROR: " + s, config)
-}
-
-// logDebug prints debugging information to the log
-func logDebug(s string, config * ServerConfig) {
-  if config.Debug {
-    sendToLog("DEBUG: "+ s, config)
-  }
-}
-
-func checkError(err error) {
-  if err != nil {
-    panic(err)
-  }
-}
-
-// checkAndInitDataBase checks if a database is present.
-// If no database present, it initializes one.
-func checkAndInitDataBase(config *ServerConfig) {
-  if config.Database != nil {
-    logDebug("Database initialized!", config)
-  }
-}
-
 // pasteHandler responds to the `/paste/` URI and sends the
 // paste home page located at `html/paste.html`.
 func pasteHandler(w http.ResponseWriter, r *http.Request, config * ServerConfig) {
   logInfo("Rendering paste.", config)
   t, _ := template.ParseFiles("html/paste.html")
   t.Execute(w, nil)
-}
-
-// hashString wraps the FNV hash function to hash strings
-func hashString(s string) string {
-  ret := ""
-  h := fnv.New64a()
-  h.Write([]byte(s))
-  ret = strconv.FormatUint(h.Sum64(), 16) // XXX check conversion for correctness
-  return ret
 }
 
 // newHandler responds to POST requests posting a new form.
@@ -99,27 +51,11 @@ func newHandler(w http.ResponseWriter, r *http.Request, config * ServerConfig) {
   created_at := time.Now()
   paste_value := r.FormValue("paste_value")
   expiration_text := r.FormValue("expiration")
-  expiration := time.Now()
-  burn_after_reading := false
-  switch expiration_text {
-  case "burn_after_reading":
-    burn_after_reading = true
-    expiration = expiration.Add(time.Hour*12)
-  case "12_hr":
-    expiration = expiration.Add(time.Hour*12)
-  case "24_hr":
-    expiration = expiration.Add(time.Hour*24)
-  case "5_days":
-    expiration = expiration.Add(time.Hour*5*24)
-  default:
-    expiration = expiration.Add(time.Hour*12) // Default to 12 hr 
-  }
+  expiration := getExpirationTime(expiration_text)
+  burn_after_reading := (expiration_text == "burn_after_reading")
   paste_hash := hashString(paste_value)
-  logDebug("Value: " + paste_value, config)
-  logDebug("Expiration: " + expiration_text, config)
-  logDebug("Hash: " + paste_hash, config)
-  stmt, _ := config.Database.Prepare("INSERT INTO paste(created_at, paste_value, expiration, burn_after_reading, paste_hash) values(?, ?, ?, ?, ?)")
-  stmt.Exec(created_at, paste_value, expiration, burn_after_reading, paste_hash)
+  logDebug("Value: "+paste_value+"\nExpiration: "+expiration_text+"\nHash: "+paste_hash, config)
+  storeNewPaste(created_at, paste_value, expiration, burn_after_reading, paste_hash, config)
   http.Redirect(w, r, "/view/"+paste_hash, 301)
 }
 
@@ -131,42 +67,33 @@ func aboutHandler(w http.ResponseWriter, r *http.Request, config *ServerConfig) 
   t.Execute(w, nil)
 }
 
-// checkValidHash checks if a string is a hexidecimal string
-func checkValidHash(paste_hash string) bool {
-  ret := true
-  valid_chars := "0123456789abcdefABCDEF"
-  for ind := 0; ind < len(paste_hash) && ret; ind++ {
-    if ! strings.Contains(valid_chars, paste_hash[ind:ind+1]) {
-      ret = false
-    }
-  }
-  return ret
-}
-
 // viewHandler responds to the `/view/` URI and sends the 
 // view page template located at `html/view.html` using
 // information given in te URI.
 func viewHandler(w http.ResponseWriter, r *http.Request, config *ServerConfig) {
   logInfo("Rendering view.", config)
-  uri := r.URL.Path
-  paste_hash := uri[len("/view/"):]
+  paste_hash := r.URL.Path[len("/view/"):]
   if checkValidHash(paste_hash) {
-    rows, _ := config.Database.Query("SELECT paste_value FROM paste WHERE paste_hash='" + paste_hash + "'")
-    paste_value := "[tktk]"
-    for rows.Next() {
-      rows.Scan(&paste_value)
+    paste_value, err := queryForPasteValue(paste_hash, config)
+    if err != nil {
+      _404Handler(w, r, config)
+    } else {
+      logDebug("hash: "+paste_hash+"\npaste: "+paste_value, config)
+      cleanDatabase(config)
+      dat := &Message{Key: paste_hash, Text: paste_value}
+      t, _ := template.ParseFiles("html/view.html")
+      t.Execute(w, dat)
     }
-    rows.Close()
-    logDebug("URI: " + uri, config)
-    logDebug("hash: " + paste_hash, config)
-    logDebug("paste: " + paste_value, config)
-    dat := &Message{Key: paste_hash, Text: paste_value}
-    t, _ := template.ParseFiles("html/view.html")
-    t.Execute(w, dat)
-  } else { // in case hash is invalid, redirect home
-    // FIXME implement a 404 page
-    pasteHandler(w, r, config)
+  } else {
+    _404Handler(w, r, config)
   }
+}
+
+// _404Handler routes the user to a 404 page
+func _404Handler(w http.ResponseWriter, r *http.Request, config *ServerConfig) {
+  logInfo("Rendering 404.", config)
+  t, _ := template.ParseFiles("html/404.html")
+  t.Execute(w, nil)
 }
 
 // makeHandler wraps the HandlerFuncs to pass the server configuration.

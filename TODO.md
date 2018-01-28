@@ -4,7 +4,7 @@
 
 Goal:
 
-- write view handler and page
+- ~~write view handler and page~~
 
 Up next:
 
@@ -15,20 +15,15 @@ Up next:
   - ~~set of Message struct~~
   - ~~check for sql injection for view handler~~
 - ~~rewrite view template to display paste~~
-- *refactor*
-  - list functions in funcs.txt
-  - break functions into 10 lines or less
-  - break file into server.go, lib.go
-  - address all fixme/xxx/todo comments
-  - replace current logging with the log function
-- add time left for paste on view
-- add view count to table
-- implement burn after reading
-- implement 404 for deleted/missing views
-- implement periodic msg deletion
-- add postgres support
-- write a log++ package
-- *refactor*
+- ~~*refactor*~~
+  - ~~list functions in funcs.txt~~
+  - ~~break functions into 10 lines or less~~
+  - ~~address all fixme/xxx/todo comments~~
+  - ~~replace current logging with the log function~~
+- ~~add view count to table~~
+- ~~implement burn after reading~~
+- ~~implement 404 for deleted/missing views~~
+- ~~implement periodic msg deletion~~
 
 ## Other
 Broad points:
@@ -43,6 +38,10 @@ For later:
 - write about page copy 
 - write install, authors, and readme
 - figure out setting global debug and in\_production
+- refactor viewHandler
+- write a log++ package
+- add time left for paste on view
+- add postgres support
 
 v1 complete when:
 
