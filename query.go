@@ -82,3 +82,42 @@ func cleanDatabase(config *ServerConfig) {
   config.Database.Exec("DELETE FROM paste WHERE view_count > 1 AND burn_after_reading = 1")
 }
 
+func checkIfBurnAfterReading(paste_hash string, config *ServerConfig) bool {
+  ret := false
+  rows, _ := config.Database.Query("SELECT burn_after_reading FROM paste WHERE paste_hash='" + paste_hash + "'")
+  for rows.Next() {
+    rows.Scan(&ret)
+  }
+  rows.Close()
+  return ret
+}
+
+func getExpiration(paste_hash string, config *ServerConfig) time.Time {
+  ret := time.Now()
+  rows, _ := config.Database.Query("SELECT expiration FROM paste WHERE paste_hash='" + paste_hash + "'")
+  for rows.Next() {
+    rows.Scan(&ret)
+  }
+  rows.Close()
+  return ret
+}
+
+// getTimeLeftMsg get the message to alert users how long a message
+// has left to live
+func getTimeLeftMsg(paste_hash string, config *ServerConfig) string {
+  ret := ""
+  burn_after_reading := checkIfBurnAfterReading(paste_hash, config)
+  expiration := getExpiration(paste_hash, config)
+  if ! burn_after_reading {
+    ret = strconv.FormatFloat(expiration.Sub(time.Now()).Hours(), 'f', 2, 64)
+    ret = ret + " hours left to read paste."
+  } else {
+    if burn_after_reading {
+      ret = "Paste set to burn after reading."
+    }
+  }
+  return ret
+}
+
+
+

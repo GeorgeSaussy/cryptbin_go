@@ -31,6 +31,7 @@ type ServerConfig struct {
 type Message struct {
   Key string
   Text string
+  TimeLeftMsg string
 }
 
 // Functions
@@ -75,12 +76,13 @@ func viewHandler(w http.ResponseWriter, r *http.Request, config *ServerConfig) {
   paste_hash := r.URL.Path[len("/view/"):]
   if checkValidHash(paste_hash) {
     paste_value, err := queryForPasteValue(paste_hash, config)
+    time_left_msg := getTimeLeftMsg(paste_hash, config)
     if err != nil {
       _404Handler(w, r, config)
     } else {
       logDebug("hash: "+paste_hash+"\npaste: "+paste_value, config)
       cleanDatabase(config)
-      dat := &Message{Key: paste_hash, Text: paste_value}
+      dat := &Message{Key: paste_hash, Text: paste_value, TimeLeftMsg: time_left_msg}
       t, _ := template.ParseFiles("html/view.html")
       t.Execute(w, dat)
     }
