@@ -10,6 +10,7 @@ import (
   "html/template"
   "net/http"
   "time"
+  _ "github.com/lib/pq"
   _ "github.com/mattn/go-sqlite3"
 )
 
@@ -20,8 +21,6 @@ import (
 type ServerConfig struct {
   InProduction bool
   Debug bool
-  Password string
-  Username string
   Database *sql.DB
 }
 
@@ -112,33 +111,42 @@ func makeHandler(fn func(http.ResponseWriter, *http.Request, *ServerConfig), con
 // initialize an http server accordingly. 
 func main() {
   // Parse flags
-  inProduction :=  flag.Bool("prod", false, "Set as true if the server is running in production.")
+  in_production :=  flag.Bool("prod", false, "Set as true if the server is running in production.")
   debug := flag.Bool("debug", false, "Set to true to print debugging information to log.")
-  password := flag.String("pwd", "", "Set the Postgres database password")
-  username := flag.String("uname", "", "Set the Postgres username.")
+  db_password := flag.String("pwd", "", "Set the Postgres database password")
+  db_username := flag.String("uname", "", "Set the Postgres username.")
+  db_name := flag.String("dbname", "", "Set the Postgres database name.")
   flag.Parse()
-  config := &ServerConfig{InProduction: *inProduction, Debug: *debug, Password: *password, Username: *username, Database: nil}
-  // Init database if need be  
-  db, err := sql.Open("sqlite3", "db/cryptbin.db")
-  if err != nil {
-    logError("Database is busted", config)
+  config := &ServerConfig{InProduction: *in_production, Debug: *debug, Database: nil}
+  // Init database if need be
+  if * in_production {
+    dbinfo := fmt.Sprintf("user=%s password=%s dbname=%s sslmode=disable", *db_username, *db_password, *db_name)
+    fmt.Printf(dbinfo)
+    db_instance, err := sql.Open("postgres", dbinfo)
+    if err != nil {
+      logError(err.Error(), config)
+    }
+    config.Database = db_instance
   } else {
-    config.Database = db
+    config.Database, _ = sql.Open("sqlite3", "db/cryptbin.db")
   }
-  checkAndInitDataBase(config)
   // Set up http server
   http.HandleFunc("/paste/", makeHandler(pasteHandler, config)) // Route `paste` to ''
   http.HandleFunc("/new/", makeHandler(newHandler, config)) // Route `new` to ''
   http.HandleFunc("/view/", makeHandler(viewHandler, config)) // Route `view` to ''
   http.HandleFunc("/about/", makeHandler(aboutHandler, config)) // Route `about` to ''
   http.HandleFunc("/", makeHandler(pasteHandler, config)) // Route root to `paste`
-  if * inProduction {
+  if * in_production {
     fmt.Printf("Running Cryptbin in production mode\n")
     fmt.Printf("Go to localhost:8080\n")
-    http.ListenAndServe(":8080",nil)
+    err := http.ListenAndServe(":8080", nil)
+    fmt.Printf(err.Error())
+    fmt.Printf("\n")
   } else {
     fmt.Printf("Running Cryptbin in developer mode\n")
     fmt.Printf("Go to localhost:8000\n")
-    http.ListenAndServe(":8000", nil)
+    err := http.ListenAndServe(":8000", nil)
+    fmt.Printf(err.Error())
+    fmt.Printf("\n")
   }
 }

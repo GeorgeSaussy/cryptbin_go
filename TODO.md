@@ -5,7 +5,7 @@
 Goal:
 
 1) ~~time left for post~~
-2) postgres support 
+2) ~~postgres support~~ 
 3) front end encryption 
 
 
