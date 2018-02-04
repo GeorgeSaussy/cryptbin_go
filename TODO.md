@@ -24,8 +24,7 @@ For later:
 - figure out setting global debug and in\_production
 - refactor viewHandler
 - write a log++ package
-- add time left for paste on view
-- add postgres support
+- use template caching
 
 v1 complete when:
 

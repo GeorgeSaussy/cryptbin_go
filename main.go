@@ -136,6 +136,7 @@ func main() {
   http.HandleFunc("/view/", makeHandler(viewHandler, config)) // Route `view` to ''
   http.HandleFunc("/about/", makeHandler(aboutHandler, config)) // Route `about` to ''
   http.HandleFunc("/", makeHandler(pasteHandler, config)) // Route root to `paste`
+  http.Handle("/assets/", http.StripPrefix("/assets/", http.FileServer(http.Dir("html/assets")))) // Route `assets/*` to `html/assets` 
   if * in_production {
     fmt.Printf("Running Cryptbin in production mode\n")
     fmt.Printf("Go to localhost:8080\n")
