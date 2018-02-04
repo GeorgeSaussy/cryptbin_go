@@ -20,7 +20,7 @@ For later:
 
 - use godoc
 - write about page copy 
-- write install, authors, and readme
+- improve INSTALL.txt
 - figure out setting global debug and in\_production
 - refactor viewHandler
 - write a log++ package

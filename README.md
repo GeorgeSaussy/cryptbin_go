@@ -1,7 +1,18 @@
 # README
+# Cryptbin
 
-I wanted to make an encrypted paste bin application, a. la. `0bin.net`. 
+> A front end encrypted pastebin
 
-The goal of this application is to learn how to use go lang on the backend.
+This repository is a server designed to maintain a front end encrypted pastebin, a. la. `0bin.net`.
 
-Still a work in progress.
+## Installing
+
+See `doc/INSTALL.txt`.
+
+## Contributing
+
+See `doc/CONTRIBUTING.md`
+
+## Licence.
+
+This is licensed under Apache 2. See `doc/LICENCE.txt`.
