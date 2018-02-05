@@ -5,8 +5,11 @@
     </title>
     <meta charset="utf-8">
     <meta name="viewprt" content="width=device-width, initial-scale=1">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
     <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
+    <script type="text/javascript" src="https://cdn.rawgit.com/ricmoo/aes-js/e27b99df/index.js"></script>
+    <script src="/assets/paste.js"></script>
   </head>
   <body>
     <div class="container">
@@ -34,7 +37,8 @@
         <p>
           Paste content below.
         </p>
-        <form class="well" method="post" action="/new/">
+        <form name="paste_form" class="well" method="post" action="/new/"  onsubmit="encryptPaste();">
+          <input name="paste_key" type="hidden" value="">
           <textarea name="paste_value" class="input-xlarge" rows="10" style="width:100%;overflow:hidden; height:250px"></textarea>
           <p></p>
           <p>

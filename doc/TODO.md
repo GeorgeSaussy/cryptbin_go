@@ -4,10 +4,17 @@
 
 Goal:
 
-1) ~~time left for post~~
-2) ~~postgres support~~ 
-3) front end encryption 
-
+1) front end encryption
+  - add onclick function to paste page
+    - ~~generate key~~
+    - ~~get the form parameter~~
+    - ~~perform the encryption~~
+    - ~~replace the form parameters and send~~
+  - add decrypt to view page
+    - ~~get the key~~
+    - ~~get the encrypted message~~
+    - ~~decrypt~~
+    - ~~replae the message~~
 
 ## Other
 Broad points:

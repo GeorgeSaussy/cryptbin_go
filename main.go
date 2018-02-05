@@ -54,9 +54,10 @@ func newHandler(w http.ResponseWriter, r *http.Request, config * ServerConfig) {
   expiration := getExpirationTime(expiration_text)
   burn_after_reading := (expiration_text == "burn_after_reading")
   paste_hash := hashString(paste_value)
-  logDebug("Value: "+paste_value+"\nExpiration: "+expiration_text+"\nHash: "+paste_hash, config)
+  paste_key := r.FormValue("paste_key")
+  logDebug("Value: "+paste_value+"\nExpiration: "+expiration_text+"\nHash: "+paste_hash+"\nKey: "+paste_key, config)
   storeNewPaste(created_at, paste_value, expiration, burn_after_reading, paste_hash, config)
-  http.Redirect(w, r, "/view/"+paste_hash, 301)
+  http.Redirect(w, r, "/view/"+paste_hash+"#"+paste_key, 301)
 }
 
 // aboutHandler responds to the `/about/` URI and sends the
