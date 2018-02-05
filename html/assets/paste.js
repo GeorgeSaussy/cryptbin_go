@@ -1,9 +1,19 @@
+/**
+ * Generate a new cryptographically random key.
+ * @returns {Uint8Array} - a random key
+*/
 function getNewKey() {
   var ret = new Uint8Array(256 / 8);
   window.crypto.getRandomValues(ret);
   return ret;
 }
 
+/**
+ * Encrypt a message with a given key
+ * @param {string} cleartext - the text to encrypt
+ * @param {Uint8Array} key - the key to use for encryption
+ * @returns {string} - the cyphertext
+*/
 function encryptMsg(cleartext, key) {
   var ret = "";
   var text_bytes = aesjs.utils.utf8.toBytes(cleartext);
@@ -13,6 +23,10 @@ function encryptMsg(cleartext, key) {
   return ret;
 }
 
+/**
+ * Encrypt a message to be sent to the server
+ * @returns {Boolean} - true
+*/
 function encryptPaste() {
   var ret = true;
   var key = getNewKey();

@@ -1,3 +1,7 @@
+/**
+ * Get a key from the page URI.
+ * @returns {Uint8Array} - the key from the URI
+*/
 function getKeyFromUri() {
   var ret = "";
   var hex_key = window.location.hash.slice(1);
@@ -6,6 +10,12 @@ function getKeyFromUri() {
   return ret;
 }
 
+/**
+ * Decrypt cypertext using a given key.
+ * @param {string} cyphertext - the cyphertext to decrypt
+ * @param {Uint8Array} key - the key with which to decrypt the message
+ * @returns {string} - cleartext for the given cyphertext
+*/
 function decryptMsg(cyphertext, key) {
   var ret = "";
   var encrypted_bytes = aesjs.utils.hex.toBytes(cyphertext);

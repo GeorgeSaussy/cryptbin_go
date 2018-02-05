@@ -10,9 +10,9 @@ import (
 
 // checkAndInitDataBase checks if a database is present.
 // If no database present, it initializes one.
-func checkAndInitDataBase(config *ServerConfig) {
+func checkAndInitDataBase() {
   if config.Database != nil {
-    logDebug("Database initialized!", config)
+    logDebug("Database initialized!")
   }
 }
 
@@ -56,29 +56,29 @@ func getExpirationTime(expiration_text string) time.Time {
 }
 
 // storeNewPaste stores a paste in the database 
-func storeNewPaste(created_at time.Time, paste_value string, expiration time.Time, burn_after_reading bool, paste_hash string, config *ServerConfig) {
+func storeNewPaste(created_at time.Time, paste_value string, expiration time.Time, burn_after_reading bool, paste_hash string) {
   if config.InProduction {
     var lastInsertId string
     err := config.Database.QueryRow("INSERT INTO paste(created_at, paste_value, expiration, burn_after_reading, paste_hash, view_count) VALUES($1, $2, $3, $4, $5, $6) returning paste_hash;", created_at, paste_value, expiration, burn_after_reading, paste_hash, 0).Scan(&lastInsertId)
     if err != nil {
-      logError(err.Error(), config)
+      logError(err.Error())
     }
   } else {
     stmt, err := config.Database.Prepare("INSERT INTO paste(created_at, paste_value, expiration, burn_after_reading, paste_hash, view_count) values(?, ?, ?, ?, ?, ?);")
     if err != nil {
-      logDebug("Error 1", config)
-      logError(err.Error(), config)
+      logDebug("Error 1")
+      logError(err.Error())
     }
     _, err = stmt.Exec(created_at, paste_value, expiration, burn_after_reading, paste_hash, 0)
     if err != nil {
-      logDebug("Error 2", config)
-      logError(err.Error(), config)
+      logDebug("Error 2")
+      logError(err.Error())
     }
   }
 }
 
 // queryForPasteValue runs a query on the database to get the paste value associated by the hash
-func queryForPasteValue(paste_hash string, config *ServerConfig) (string, error) {
+func queryForPasteValue(paste_hash string) (string, error) {
   ret := ""
   rows, err := config.Database.Query("SELECT paste_value FROM paste WHERE paste_hash='" + paste_hash + "'")
   for rows.Next() {
@@ -93,27 +93,27 @@ func queryForPasteValue(paste_hash string, config *ServerConfig) (string, error)
 }
 
 // cleanDatabase deletes all rows from the database that are too old
-func cleanDatabase(config *ServerConfig) {
+func cleanDatabase() {
   if config.InProduction {
     stmt, err := config.Database.Prepare("DELETE FROM paste WHERE view_count > 1 AND burn_after_reading")
     if err != nil {
-      logError("Error 1", config)
-      logError(err.Error(), config)
+      logError("Error 1")
+      logError(err.Error())
     }
     _, err = stmt. Exec()
     if err != nil {
-      logError("Error 2", config)
-      logError(err.Error(), config)
+      logError("Error 2")
+      logError(err.Error())
     }
     stmt, err = config.Database.Prepare("DELETE FROM paste WHERE expiration < NOW()")
     if err != nil {
-      logError("Error 3", config)
-      logError(err.Error(), config)
+      logError("Error 3")
+      logError(err.Error())
     }
     _, err = stmt.Exec()
     if err != nil {
-      logError("Error 4", config)
-      logError(err.Error(), config)
+      logError("Error 4")
+      logError(err.Error())
     }
   } else {
     config.Database.Exec("DELETE FROM paste WHERE expiration < DATETIME('now')")
@@ -121,7 +121,8 @@ func cleanDatabase(config *ServerConfig) {
   }
 }
 
-func checkIfBurnAfterReading(paste_hash string, config *ServerConfig) bool {
+// checkIfBurnAfterReading checks if a paste is set to burn after reading
+func checkIfBurnAfterReading(paste_hash string) bool {
   ret := false
   rows, _ := config.Database.Query("SELECT burn_after_reading FROM paste WHERE paste_hash='" + paste_hash + "'")
   for rows.Next() {
@@ -131,7 +132,8 @@ func checkIfBurnAfterReading(paste_hash string, config *ServerConfig) bool {
   return ret
 }
 
-func getExpiration(paste_hash string, config *ServerConfig) time.Time {
+// getExpiration gets the time.Time at which a paste is expected to expire.
+func getExpiration(paste_hash string) time.Time {
   ret := time.Now()
   rows, _ := config.Database.Query("SELECT expiration FROM paste WHERE paste_hash='" + paste_hash + "'")
   for rows.Next() {
@@ -143,12 +145,12 @@ func getExpiration(paste_hash string, config *ServerConfig) time.Time {
 
 // getTimeLeftMsg get the message to alert users how long a message
 // has left to live
-func getTimeLeftMsg(paste_hash string, config *ServerConfig) string {
+func getTimeLeftMsg(paste_hash string) string {
   ret := ""
-  burn_after_reading := checkIfBurnAfterReading(paste_hash, config)
-  expiration := getExpiration(paste_hash, config)
-  logDebug(expiration.String(), config)
-  logDebug(time.Now().String(), config)
+  burn_after_reading := checkIfBurnAfterReading(paste_hash)
+  expiration := getExpiration(paste_hash)
+  logDebug(expiration.String())
+  logDebug(time.Now().String())
   if ! burn_after_reading {
     if config.InProduction {
       loc, _ := time.LoadLocation("")
